@@ -1,7 +1,8 @@
 body{
   margin: 0; padding: 0;
   background: #ffffff url("../img/uefa.jpg ") no-repeat center center fixed;
-  background-size: cover; font-family: 'Oswald', sans-serif;
+  background-size: cover; 
+  font-family: 'Oswald', sans-serif;
 }
 
 .round{

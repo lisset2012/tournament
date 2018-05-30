@@ -1,7 +1,12 @@
 //select Elements from here, I kept the teams array because that can be confusing
+var teamContainer = document.querySelector(".container")
 var teams = setTeams(getTeamsArray())
 var play = document.querySelector(".play")
 var playing = document.querySelectorAll(".playing")
+var opp1 = document.querySelector(".opp1")
+var opp2 = document.querySelector(".opp2")
+var vs = document.querySelector(".vs")
+var win = document.querySelector(".winner")
 
 //game states
 var round = 1
@@ -20,11 +25,15 @@ function toggle(elem, tog){
 //This function puts the teams in the container div innerHTML 
 function setTeams(teamsArray){
   //Reset the containers InnerHTML so that all the teams are gone
+  teamContainer.innerHTML = ""
   //Create a temp array so that it holds the removed elements from the holder array
+  var temp = []
   var length = teamsArray.length-1
   for(var i=length; i>(length-8); i--){
     var random = Math.floor(Math.random()*(i+1))
     //Add the element to the teamContainer using InnerHTML and select the element by using the random number to grab from the teamsArray. Once you are done push the selected element into the temp array and remove the element from the teamsArray by using the function splice
+    teamContainer.innerHTML += teamsArray[random]
+    temp.push(teamsArray.splice(random,1))
   }
   return document.querySelectorAll('.team')
 }
@@ -52,6 +61,9 @@ function createRounds(teams){
 //This function should append the classes that will set each team in its appropriate spots
 function setSpots(teams){
   //Use a forEach loop to loop over the teams array and pass in a function that calls the toggle function. The first parameter should be teams[index] and the second parameter should say `spot${index+1}`.
+  teams.forEach(function(team, index){
+    toggle(team,`spot${index+1}`)
+  })
   play.disabled = false
 }
 
@@ -62,26 +74,88 @@ function setSpots(teams){
   returnToOriginal()
 
 */
+function gameOver(){
+  play.disabled = true
+  playing.forEach(function(p){
+    toggle(p,"hide")
+  })
+  toggle(vs, "hide")
+  toggle(win, "hide")
+  returnToOriginal()
+}
+
+function nextMatch(){
+  round++
+  match = 0
+  changePlayer()
+}
+ 
+function changePlayer(){
+  if(place === "player1"){
+    place = "player2"
+  }else{
+    place = "player1"
+    x++
+  }
+  setPlayers()
+}
+
+function returnToOriginal(){
+  setTimeout(function(){
+    toggle(vs, "hide")
+    toggle(win, "hide")
+    opp1.textContent = ""
+    opp2.textContent = ""
+    round = 1
+    match = 0
+    place = "player1"
+    currentPlayers = []
+    x = 0;
+    teams = setTeams(getTeamsArray())
+    rounds = createRounds(teams)
+    setSpots (teams)
+    setPlayers()
+    playing.forEach(function(p){
+      toggle(p, "hide")
+    })
+  }, 3000)
+  
+}
 
 //This function set the players who will be currently playing
 function setPlayers(){
   currentPlayers = [rounds[`round${round}`][match].player1, rounds[`round${round}`][match].player2 ]
   playing.forEach(function(p, i){
     //Uncomment below when the teams are set on the screen
-    //p.textContent = currentPlayers[i].dataset.name
+    p.textContent = currentPlayers[i].dataset.name
   })
 }
 
 function changeMatch(){
-  // If round equal 3 call gameOver function then return. 
+  if(round === 3){
+    gameOver()
+    return
+    // If round equal 3 call gameOver function then return. 
+  }
+  
   // If the last match of the round is played call the nextMatch(), set x back to 0, then return
-  // At the bottom of the function, Increment match then call the changePlayer() function
+  if(match >= rounds[`round${round}`].length - 1){
+    nextMatch()
+    x = 0
+    return
+  }
+// At the bottom of the function, Increment match then call the changePlayer() function
+  match++
+  changePlayer()
+  
 }
 
 //changes the position of the winner
-function moveTeam(winner, spot){
+function moveTeam(winner, newSpot){
   var oldSpot = winner.classList[1]
   //Change the winner from its "oldSpot" to its new spot.
+  toggle(winner, oldSpot)
+  toggle(winner, newSpot)
 }
 
 //sets the scores 
@@ -91,18 +165,25 @@ function playGame(round, match, place){
   
   if(score1 > score2){
     //Set the scores to their appropriate places and then move the winner(team1) into the next round
+    opp2.textContent = Math.ceil(score2 * 7)
+    opp1.textContent = Math.ceil(score1 * 7) - 1
+    rounds[`round${round+1}`][x][place] = currentPlayers[0]//???
   }
   if(score1 < score2){
+    opp2.textContent = Math.ceil(score2 * 7)
+    opp1.textContent = Math.ceil(score1 * 7) - 1
+    rounds[`round${round+1}`][x][place] = currentPlayers[1]//???
     //Set the scores to their appropriate places and then move the winner(team2) into the next round
   }
 
   //return the winner
+  return rounds[`round${round+1}`][x][place]
 }
 
 //Event Listeners
 play.addEventListener("click", function(e){
   winner = playGame(round, match, place)
-  moveTeam(/* Set parameters here */)
+  moveTeam(winner, rounds[`round${round}`][match]["spot"])
   changeMatch()
 })
 
